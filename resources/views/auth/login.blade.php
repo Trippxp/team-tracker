@@ -20,7 +20,7 @@
             <div class="alert alert-success py-2">{{ session('success') }}</div>
             @endif
 
-            <form method="POST" action="{{ route('login') }}">
+            <form method="POST" action="{{ route('login.post') }}">
                 @csrf
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Email Address</label>
