@@ -12,8 +12,10 @@ COPY . .
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-RUN mkdir -p /var/data \
-    && touch /var/data/database.sqlite \
+RUN mkdir -p /app/database \
+    && touch /app/database/database.sqlite \
+    && chown -R www-data:www-data /app/storage /app/bootstrap/cache \
+    && chmod -R 775 /app/storage /app/bootstrap/cache \
     && php artisan config:clear
 
 EXPOSE 8080
