@@ -1,27 +1,21 @@
-FROM php:8.2-apache
+FROM php:8.2-cli
 
 RUN apt-get update && apt-get install -y \
-    libsqlite3-dev unzip git \
-    && docker-php-ext-install pdo pdo_sqlite \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-RUN a2enmod rewrite
+    curl zip unzip git libsqlite3-dev \
+    && docker-php-ext-install pdo pdo_sqlite
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /var/www/html
+WORKDIR /app
 COPY . .
 
-RUN composer install --no-interaction --optimize-autoloader --no-dev --ignore-platform-req=ext-zip
+RUN composer install --no-dev --optimize-autoloader
 
-RUN touch database/database.sqlite \
-    && chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 storage bootstrap/cache database
+RUN mkdir -p /var/data
 
-RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf \
-    && echo '<Directory /var/www/html/public>\n    AllowOverride All\n    Require all granted\n</Directory>' \
-       >> /etc/apache2/sites-available/000-default.conf
+EXPOSE 8080
 
-EXPOSE 80
-
-CMD ["sh", "-c", "php artisan config:clear && php artisan migrate:fresh --seed --force && apache2-foreground"]
+CMD php artisan config:clear && \
+    php artisan migrate --force && \
+    php artisan db:seed --force && \
+    php artisan serve --host=0.0.0.0 --port=8080
