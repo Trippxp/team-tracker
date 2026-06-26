@@ -11,10 +11,15 @@ RUN apt-get update && apt-get install -y \
 # 2. Enable Apache rewrite module for Laravel routing
 RUN a2enmod rewrite
 
-# 3. Configure Apache Document Root to point to Laravel's public directory
-ENV APACHE_DOCUMENT_ROOT /app/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+# 3. Configure Apache VirtualHost and enable .htaccess Overrides
+RUN echo '<VirtualHost *:80>\n\
+    DocumentRoot /app/public\n\
+    <Directory /app/public>\n\
+        Options Indexes FollowSymLinks\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 # 4. Set the working directory inside the container
 WORKDIR /app
