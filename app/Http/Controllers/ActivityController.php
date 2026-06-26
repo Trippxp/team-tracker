@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\Auth;
 class ActivityController extends Controller
 {
     /**
-     * List all activities (daily view with all today's updates).
+     * List all activities for a given date with all updates made that day.
+     * Useful for shift handovers — shows who updated what and when.
      */
     public function index(Request $request)
     {
@@ -36,6 +37,7 @@ class ActivityController extends Controller
 
     /**
      * Store a newly created activity.
+     * Only admins may input new activities into the system.
      */
     public function store(Request $request)
     {
@@ -55,7 +57,7 @@ class ActivityController extends Controller
     }
 
     /**
-     * Show a single activity with all its logs.
+     * Show a single activity with its full log history.
      */
     public function show(Activity $activity)
     {
@@ -64,7 +66,8 @@ class ActivityController extends Controller
     }
 
     /**
-     * Show form to update status/remark for an activity.
+     * Show the status update form for an activity.
+     * Any authenticated team member can log an update.
      */
     public function edit(Activity $activity)
     {
@@ -72,20 +75,22 @@ class ActivityController extends Controller
     }
 
     /**
-     * Update the activity status — creates a new ActivityLog entry.
+     * Log a status update for an activity.
+     * Captures the authenticated user's bio details and timestamp automatically.
+     * A remark is required so handover notes are always meaningful.
      */
     public function update(Request $request, Activity $activity)
     {
         $data = $request->validate([
             'status' => 'required|in:pending,in_progress,done',
-            'remark' => 'nullable|string|max:1000',
+            'remark' => 'required|string|min:3|max:1000',
         ]);
 
         ActivityLog::create([
             'activity_id' => $activity->id,
             'user_id'     => Auth::id(),
             'status'      => $data['status'],
-            'remark'      => $data['remark'] ?? null,
+            'remark'      => $data['remark'],
             'logged_at'   => now(),
         ]);
 
@@ -94,7 +99,7 @@ class ActivityController extends Controller
     }
 
     /**
-     * Soft-delete an activity (admin only).
+     * Remove an activity from the system (admin only).
      */
     public function destroy(Activity $activity)
     {
@@ -105,6 +110,9 @@ class ActivityController extends Controller
             ->with('success', 'Activity removed.');
     }
 
+    /**
+     * Abort with 403 if the current user is not an admin.
+     */
     private function authorizeAdmin(): void
     {
         if (!Auth::user()->isAdmin()) {
