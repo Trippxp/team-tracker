@@ -38,11 +38,11 @@ class Activity extends Model
         return $this->hasOne(ActivityLog::class)->latestOfMany();
     }
 
-    public function todayLogs()
-    {
-        return $this->hasMany(ActivityLog::class)
-            ->whereDate('created_at', today());
-    }
+   public function todayLogs()
+{
+    return $this->hasMany(ActivityLog::class)
+        ->whereDate('logged_at', today());
+}
 
     /**
      * Get the current status based on the latest log
